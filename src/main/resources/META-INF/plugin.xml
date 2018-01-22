@@ -4,8 +4,6 @@
   <vendor email="siosio12@gmail.com" url="https://github.com/siosio">Github page</vendor>
 
   <description><![CDATA[
-    Enter short description for your plugin here.<br>
-    <em>most HTML tags may be used</em>
     ]]></description>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
@@ -15,7 +13,7 @@
   -->
 
   <depends>org.jetbrains.kotlin</depends>
-  
+
   <extensions defaultExtensionNs="com.intellij">
     <enterHandlerDelegate implementation="siosio.kodkod.EnterAfterKDocGenHandler" order="first" />
   </extensions>

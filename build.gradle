@@ -34,14 +34,15 @@ compileTestKotlin {
 }
 intellij {
   version '2017.3.3'
-  plugins = ['DatabaseTools', 'Kotlin']
-  updateSinceUntilBuild = false
-  intellij.type = 'IU'
+  plugins = ['Kotlin']
+  intellij.type = 'IC'
 }
+
 patchPluginXml {
-  changeNotes """
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>"""
+  changeNotes """"""
+  
+  sinceBuild "173.0"
+  untilBuild "999.999"
 }
 
 task wrapper(type: Wrapper) {
