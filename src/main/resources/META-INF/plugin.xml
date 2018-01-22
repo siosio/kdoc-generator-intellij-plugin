@@ -1,0 +1,26 @@
+<idea-plugin>
+  <id>siosio.kodkod</id>
+  <name>kodkod</name>
+  <vendor email="siosio12@gmail.com" url="https://github.com/siosio">Github page</vendor>
+
+  <description><![CDATA[
+    Enter short description for your plugin here.<br>
+    <em>most HTML tags may be used</em>
+    ]]></description>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <depends>org.jetbrains.kotlin</depends>
+  
+  <extensions defaultExtensionNs="com.intellij">
+    <enterHandlerDelegate implementation="siosio.kodkod.EnterAfterKDocGenHandler" order="first" />
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+</idea-plugin>
