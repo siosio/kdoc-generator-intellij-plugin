@@ -4,6 +4,7 @@
   <vendor email="siosio12@gmail.com" url="https://github.com/siosio">Github page</vendor>
 
   <description><![CDATA[
+  generate kdoc plugin.
     ]]></description>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
