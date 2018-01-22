@@ -9,11 +9,11 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.*
 import com.intellij.psi.util.*
 import com.intellij.util.text.*
-import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.kdoc.psi.api.*
 import org.jetbrains.kotlin.kdoc.psi.impl.*
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.*
 
 class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
 
@@ -26,8 +26,8 @@ class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
             return EnterHandlerDelegate.Result.Continue
         }
 
-        val offset = editor.caretModel.offset
-        if (!isInKDoc(editor, offset)) {
+        val caretModel = editor.caretModel
+        if (!isInKDoc(editor, caretModel.offset)) {
             return EnterHandlerDelegate.Result.Continue
         }
 
@@ -37,24 +37,32 @@ class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
         documentManager.commitDocument(document!!)
 
         ApplicationManager.getApplication().runWriteAction {
-            val elementAtCaret = file.findElementAt(offset)
+            val elementAtCaret = file.findElementAt(caretModel.offset)
 
             val kdoc = PsiTreeUtil.getParentOfType(elementAtCaret, KDoc::class.java) ?: return@runWriteAction
-            val kDocSection = PsiTreeUtil.getChildOfType(kdoc, KDocSection::class.java) ?: return@runWriteAction
-            val func = PsiTreeUtil.getParentOfType(kDocSection, KtNamedFunction::class.java)?.valueParameters
+            val func = PsiTreeUtil.getParentOfType(kdoc, KtNamedFunction::class.java)?.valueParameters
                        ?: return@runWriteAction
 
             val kDocElementFactory = KDocElementFactory(project)
             val newKdoc = func.map { it.name }
                     .map { "@param $it" }
-                    .joinToString("\n", transform = {"* $it"})
-                    .let { "/**\n*\n$it\n*/" }
+                    .joinToString("\n", transform = { "* $it" })
+                    .let { "/**\n* \n$it\n*/" }
                     .let { kDocElementFactory.createKDocFromText(it) }
-            CodeStyleManager.getInstance(project).reformat(kdoc.replace(newKdoc))
+                    .let { kdoc.replace(it) }
+            CodeStyleManager.getInstance(project).reformat(newKdoc)
+
+            newKdoc.getChildOfType<KDocSection>()?.let {
+                caretModel.moveToOffset(it.textOffset + 1)
+            }
         }
         return EnterHandlerDelegate.Result.Continue
     }
 
+    /**
+     *
+     * @param editor
+     */
     private fun isInKDoc(editor: Editor, offset: Int): Boolean {
         val document = editor.document
         val docChars = document.charsSequence
