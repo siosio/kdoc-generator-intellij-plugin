@@ -46,12 +46,11 @@ class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
 
             val kDocElementFactory = KDocElementFactory(project)
             val newKdoc = func.map { it.name }
-                    .map { "* @param [$it]" }
-                    .joinToString("\n")
-                    .let { "/**\n$it\n*/" }
+                    .map { "@param $it" }
+                    .joinToString("\n", transform = {"* $it"})
+                    .let { "/**\n*\n$it\n*/" }
                     .let { kDocElementFactory.createKDocFromText(it) }
-            CodeStyleManager.getInstance(project).reformat(kdoc.replaced(newKdoc))
-            
+            CodeStyleManager.getInstance(project).reformat(kdoc.replace(newKdoc))
         }
         return EnterHandlerDelegate.Result.Continue
     }
