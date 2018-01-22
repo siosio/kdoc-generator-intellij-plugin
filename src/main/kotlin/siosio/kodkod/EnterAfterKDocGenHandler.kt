@@ -59,10 +59,6 @@ class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
         return EnterHandlerDelegate.Result.Continue
     }
 
-    /**
-     *
-     * @param editor
-     */
     private fun isInKDoc(editor: Editor, offset: Int): Boolean {
         val document = editor.document
         val docChars = document.charsSequence
