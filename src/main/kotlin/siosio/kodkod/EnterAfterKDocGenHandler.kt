@@ -33,27 +33,26 @@ class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
 
         val project = file.project
         val documentManager = PsiDocumentManager.getInstance(project)
-        val document = documentManager.getDocument(file)
-        documentManager.commitDocument(document!!)
+        documentManager.commitDocument(documentManager.getDocument(file) ?: return EnterHandlerDelegate.Result.Continue)
 
         ApplicationManager.getApplication().runWriteAction {
             val elementAtCaret = file.findElementAt(caretModel.offset)
 
             val kdoc = PsiTreeUtil.getParentOfType(elementAtCaret, KDoc::class.java) ?: return@runWriteAction
-            val func = PsiTreeUtil.getParentOfType(kdoc, KtNamedFunction::class.java)?.valueParameters
-                       ?: return@runWriteAction
+            val func = PsiTreeUtil.getParentOfType(kdoc, KtNamedFunction::class.java) ?: return@runWriteAction
+            val params: List<PsiNameIdentifierOwner> = func.typeParameters + func.valueParameters
 
             val kDocElementFactory = KDocElementFactory(project)
-            val newKdoc = func.map { it.name }
+            val newKdoc = params.map { it.name }
                     .map { "@param $it" }
                     .joinToString("\n", transform = { "* $it" })
-                    .let { "/**\n* \n$it\n*/" }
+                    .let { "/**\n* TODO\n$it\n*/" }
                     .let { kDocElementFactory.createKDocFromText(it) }
                     .let { kdoc.replace(it) }
-            CodeStyleManager.getInstance(project).reformat(newKdoc)
-
+                    .let { CodeStyleManager.getInstance(project).reformat(it) }
+            
             newKdoc.getChildOfType<KDocSection>()?.let {
-                caretModel.moveToOffset(it.textOffset + 1)
+                caretModel.moveToOffset(it.textOffset + 2)
             }
         }
         return EnterHandlerDelegate.Result.Continue
