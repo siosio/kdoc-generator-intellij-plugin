@@ -9,6 +9,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.*
 import com.intellij.psi.util.*
 import com.intellij.util.text.*
+import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.kdoc.psi.api.*
 import org.jetbrains.kotlin.kdoc.psi.impl.*
@@ -36,34 +37,42 @@ class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
 
         val project = file.project
         val documentManager = PsiDocumentManager.getInstance(project)
-        val document = documentManager.getDocument(file) ?: return EnterHandlerDelegate.Result.Continue
-        documentManager.commitDocument(document)
+        documentManager.commitAllDocuments()
+
+        val elementAtCaret = file.findElementAt(caretModel.offset)
+        val kdoc = PsiTreeUtil.getParentOfType(elementAtCaret, KDoc::class.java)
+                   ?: return EnterHandlerDelegate.Result.Continue
+        val kdocSection = kdoc.getChildOfType<KDocSection>() ?: return EnterHandlerDelegate.Result.Continue
+        // KDocのセクションが空(*だけ)以外の場合は処理しない。
+        if (kdocSection.text.trim() != "*") {
+            return EnterHandlerDelegate.Result.Continue
+        }
 
         ApplicationManager.getApplication().runWriteAction {
-            val elementAtCaret = file.findElementAt(caretModel.offset)
-            val kdoc = PsiTreeUtil.getParentOfType(elementAtCaret, KDoc::class.java) ?: return@runWriteAction
             val kDocElementFactory = KDocElementFactory(project)
 
             val parent = kdoc.parent
             when (parent) {
                 is KtNamedFunction -> {
                     val params: List<PsiNameIdentifierOwner> = parent.typeParameters + parent.valueParameters
-
-                    params.map { it.name }
-                            .map { "@param $it" }
-                            .joinToString("\n", transform = { "* $it" })
-                            .let { "/**\n* TODO\n$it\n*/" }
-                            .let { kDocElementFactory.createKDocFromText(it) }
-                            .let { kdoc.replace(it) }
-                            .let { CodeStyleManager.getInstance(project).reformat(it) }
+                    if (!params.isEmpty()) {
+                        params.map { it.name }
+                                .map { "@param $it" }
+                                .joinToString("\n", transform = { "* $it" })
+                                .let { "/**\n* TODO\n$it\n*/" }
+                                .let { kDocElementFactory.createKDocFromText(it) }
+                                .let { kdoc.replace(it) }
+                                .let { CodeStyleManager.getInstance(project).reformat(it) }
+                    } else {
+                        null
+                    }
                 }
-                else -> return@runWriteAction
-            }.let {
+                else -> null
+            }?.let {
                 it.getChildOfType<KDocSection>()?.let {
                     caretModel.moveToOffset(it.textOffset + 6)
                 }
             }
-
         }
         return EnterHandlerDelegate.Result.Continue
     }
