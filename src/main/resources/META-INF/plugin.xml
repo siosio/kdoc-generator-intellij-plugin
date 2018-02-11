@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>siosio.kodkod</id>
   <name>kodkod</name>
-  <vendor email="siosio12@gmail.com" url="https://github.com/siosio">Github page</vendor>
+  <vendor email="siosio12@gmail.com" url="https://github.com/siosio">siosio</vendor>
 
   <description><![CDATA[
   generate kdoc plugin.
