@@ -45,6 +45,6 @@ patchPluginXml {
   untilBuild "999.999"
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = "4.4.1"
+wrapper {
+  gradleVersion = "5.1"
 }
