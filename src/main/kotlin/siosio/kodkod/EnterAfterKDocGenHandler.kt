@@ -9,18 +9,13 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.*
 import com.intellij.psi.util.*
 import com.intellij.util.text.*
-import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.kdoc.psi.api.*
 import org.jetbrains.kotlin.kdoc.psi.impl.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-/**
- *
- */
 class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
-
 
     override fun postProcessEnter(file: PsiFile,
                                   editor: Editor,
@@ -53,21 +48,14 @@ class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
 
             val parent = kdoc.parent
             when (parent) {
-                is KtNamedFunction -> {
-                    val params: List<PsiNameIdentifierOwner> = parent.typeParameters + parent.valueParameters
-                    if (!params.isEmpty()) {
-                        params.map { it.name }
-                                .map { "@param $it" }
-                                .joinToString("\n", transform = { "* $it" })
-                                .let { "/**\n* TODO\n$it\n*/" }
-                                .let { kDocElementFactory.createKDocFromText(it) }
-                                .let { kdoc.replace(it) }
-                                .let { CodeStyleManager.getInstance(project).reformat(it) }
-                    } else {
-                        null
-                    }
-                }
+                is KtNamedFunction -> NamedFunctionKDocGenerator(parent)
+                is KtClass -> ClassKDocGenerator(parent)
                 else -> null
+            }?.generate()
+            ?.let {
+                kDocElementFactory.createKDocFromText(it)
+                        .let { kdoc.replace(it) }
+                        .let { CodeStyleManager.getInstance(project).reformat(it) }
             }?.let {
                 it.getChildOfType<KDocSection>()?.let {
                     caretModel.moveToOffset(it.textOffset + 6)
