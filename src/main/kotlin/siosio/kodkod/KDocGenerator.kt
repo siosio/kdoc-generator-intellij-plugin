@@ -34,7 +34,6 @@ class NamedFunctionKDocGenerator(private val function: KtNamedFunction) : KDocGe
         return builder.toString()
     }
 }
-data class Hoge(val hoge:String)
 
 class ClassKDocGenerator(private val klass: KtClass) : KDocGenerator {
     override fun generate(): String {
