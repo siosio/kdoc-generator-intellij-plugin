@@ -1,11 +1,11 @@
 <idea-plugin>
   <id>siosio.kodkod</id>
-  <name>kodkod</name>
+  <name>kdoc-generator</name>
   <vendor email="siosio12@gmail.com" url="https://github.com/siosio">siosio</vendor>
 
   <description>
     <![CDATA[
-  generate kdoc plugin.
+    Plugin to generate class and method KDoc.
     ]]></description>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
