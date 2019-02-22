@@ -30,6 +30,11 @@ class NamedFunctionKDocGenerator(private val function: KtNamedFunction) : KDocGe
         if (function.valueParameters.isNotEmpty()) {
             builder.appendLine(toParamsKdoc(params = function.valueParameters))
         }
+        function.typeReference?.let {
+            if (it.text != "Unit") {
+                builder.appendLine("* @return")
+            }
+        }
         builder.appendLine("*/")
         return builder.toString()
     }
