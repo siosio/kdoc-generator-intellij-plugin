@@ -1,7 +1,11 @@
 package siosio.kodkod
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.idea.core.resolveType
+import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 interface KDocGenerator {
 
@@ -30,9 +34,18 @@ class NamedFunctionKDocGenerator(private val function: KtNamedFunction) : KDocGe
         if (function.valueParameters.isNotEmpty()) {
             builder.appendLine(toParamsKdoc(params = function.valueParameters))
         }
-        function.typeReference?.let {
-            if (it.text != "Unit") {
-                builder.appendLine("* @return")
+        when (function.hasDeclaredReturnType()) {
+            true -> {
+                function.typeReference?.let {
+                    if (it.text != "Unit") {
+                        builder.appendLine("* @return")
+                    }
+                }
+            }
+            false -> {
+                function.bodyExpression?.resolveType()?.let {
+                    builder.appendLine("* @return")
+                }
             }
         }
         builder.appendLine("*/")
