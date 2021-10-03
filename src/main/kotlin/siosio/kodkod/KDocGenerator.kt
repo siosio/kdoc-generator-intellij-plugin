@@ -1,10 +1,13 @@
 package siosio.kodkod
 
-import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.core.resolveType
-import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.types.KotlinType
+import com.intellij.psi.PsiNameIdentifierOwner
+import org.jetbrains.kotlin.idea.debugger.sequence.psi.resolveType
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.getDeclarationBody
+import org.jetbrains.kotlin.nj2k.postProcessing.type
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtNamedDeclarationUtil
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 interface KDocGenerator {
@@ -34,19 +37,9 @@ class NamedFunctionKDocGenerator(private val function: KtNamedFunction) : KDocGe
         if (function.valueParameters.isNotEmpty()) {
             builder.appendLine(toParamsKdoc(params = function.valueParameters))
         }
-        when (function.hasDeclaredReturnType()) {
-            true -> {
-                function.typeReference?.let {
-                    if (it.text != "Unit") {
-                        builder.appendLine("* @return")
-                    }
-                }
-            }
-            false -> {
-                function.bodyExpression?.resolveType()?.let {
-                    builder.appendLine("* @return")
-                }
-            }
+
+        if (function.type()?.isUnit() == false) {
+            builder.appendLine("* @return")
         }
         builder.appendLine("*/")
         return builder.toString()
