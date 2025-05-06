@@ -1,6 +1,6 @@
 <idea-plugin>
   <id>siosio.kodkod</id>
-  <name>kdoc-generator</name>
+  <name>Kdoc-Generator</name>
   <vendor email="siosio12@gmail.com" url="https://github.com/siosio">siosio</vendor>
 
   <description>
@@ -16,6 +16,10 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <enterHandlerDelegate implementation="siosio.kodkod.EnterAfterKDocGenHandler" order="first" />
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <supportsKotlinPluginMode supportsK2="true" />
   </extensions>
 
   <actions>
