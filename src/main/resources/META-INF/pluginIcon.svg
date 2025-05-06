@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+  <defs>
+    <linearGradient id="kotlinGradient" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" style="stop-color:#1C93C1"/>
+      <stop offset="100%" style="stop-color:#7F52FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="8" fill="#F5F5F5"/>
+  <g transform="translate(4, 4)">
+    <!-- Document shape -->
+    <path d="M24,2 L8,2 C6.9,2 6,2.9 6,4 L6,28 C6,29.1 6.9,30 8,30 L24,30 C25.1,30 26,29.1 26,28 L26,4 C26,2.9 25.1,2 24,2 Z" fill="white" stroke="#CCCCCC"/>
+    
+    <!-- Document lines -->
+    <line x1="10" y1="8" x2="22" y2="8" stroke="#CCCCCC" stroke-width="1.5"/>
+    <line x1="10" y1="12" x2="22" y2="12" stroke="#CCCCCC" stroke-width="1.5"/>
+    <line x1="10" y1="16" x2="22" y2="16" stroke="#CCCCCC" stroke-width="1.5"/>
+    <line x1="10" y1="20" x2="18" y2="20" stroke="#CCCCCC" stroke-width="1.5"/>
+    
+    <!-- Kotlin K -->
+    <path d="M4,4 L12,16 L4,28 L16,16 Z" fill="url(#kotlinGradient)"/>
+    
+    <!-- KDoc symbol /** */ -->
+    <text x="12" y="26" font-family="monospace" font-size="6" fill="#7F52FF" font-weight="bold">/**</text>
+    <text x="22" y="26" font-family="monospace" font-size="6" fill="#7F52FF" font-weight="bold">*/</text>
+  </g>
+</svg>
