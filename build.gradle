@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'siosio'
-version '3.0.0'
+version '2026.1.2'
 
 repositories {
   mavenCentral()
@@ -28,7 +28,7 @@ kotlin {
 
 tasks {
   patchPluginXml {
-    sinceBuild = '250'
-    untilBuild = '259.*'
+    sinceBuild = '261'
+    untilBuild = '261.*'
   }
 }
