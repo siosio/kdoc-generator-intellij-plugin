@@ -1,32 +1,39 @@
 package siosio.kodkod
 
-import com.intellij.codeInsight.*
-import com.intellij.codeInsight.editorActions.enter.*
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.*
-import com.intellij.openapi.editor.*
-import com.intellij.psi.*
-import com.intellij.psi.codeStyle.*
-import com.intellij.psi.util.*
-import com.intellij.util.text.*
-import org.jetbrains.kotlin.idea.kdoc.*
-import org.jetbrains.kotlin.kdoc.psi.api.*
-import org.jetbrains.kotlin.kdoc.psi.impl.*
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
+import org.jetbrains.kotlin.kdoc.psi.api.KDoc
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
 
-    override fun postProcessEnter(file: PsiFile,
-                                  editor: Editor,
-                                  dataContext: DataContext): EnterHandlerDelegate.Result {
-
+    override fun postProcessEnter(
+        file: PsiFile,
+        editor: Editor,
+        dataContext: DataContext
+    ): EnterHandlerDelegate.Result {
         if (file !is KtFile || !CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
             return EnterHandlerDelegate.Result.Continue
         }
 
-        val caretModel = editor.caretModel
-        if (!isInKDoc(editor, caretModel.offset)) {
+        val caretOffset = editor.caretModel.offset
+        val kdoc = findKDocAtCaret(file, caretOffset) ?: return EnterHandlerDelegate.Result.Continue
+        val kdocSection = PsiTreeUtil.getChildOfType(kdoc, KDocSection::class.java)
+            ?: return EnterHandlerDelegate.Result.Continue
+        // 空の KDoc のときだけ生成する。
+        if (!isEffectivelyEmptyKDocSection(kdocSection)) {
             return EnterHandlerDelegate.Result.Continue
         }
 
@@ -34,45 +41,42 @@ class EnterAfterKDocGenHandler : EnterHandlerDelegateAdapter() {
         val documentManager = PsiDocumentManager.getInstance(project)
         documentManager.commitAllDocuments()
 
-        val elementAtCaret = file.findElementAt(caretModel.offset)
-        val kdoc = PsiTreeUtil.getParentOfType(elementAtCaret, KDoc::class.java)
-                   ?: return EnterHandlerDelegate.Result.Continue
-        val kdocSection = kdoc.getChildOfType<KDocSection>() ?: return EnterHandlerDelegate.Result.Continue
-        // KDocのセクションが空(*だけ)以外の場合は処理しない。
-        if (kdocSection.text.trim() != "*") {
-            return EnterHandlerDelegate.Result.Continue
-        }
-
-        ApplicationManager.getApplication().runWriteAction {
-            val kDocElementFactory = KDocElementFactory(project)
-
-            val parent = kdoc.parent
-            when (parent) {
-                is KtNamedFunction -> NamedFunctionKDocGenerator(parent)
-                is KtClass -> ClassKDocGenerator(parent)
+        WriteCommandAction.runWriteCommandAction(project) {
+            val factory = KDocElementFactory(project)
+            val generated = when (val parent = kdoc.parent) {
+                is KtNamedFunction -> NamedFunctionKDocGenerator(parent).generate()
+                is KtClass -> ClassKDocGenerator(parent).generate()
                 else -> null
-            }?.generate()
-            ?.let {
-                kDocElementFactory.createKDocFromText(it)
-                        .let { kdoc.replace(it) }
-                        .let { CodeStyleManager.getInstance(project).reformat(it) }
-            }?.let {
-                it.getChildOfType<KDocSection>()?.let {
-                    caretModel.moveToOffset(it.textOffset + 6)
-                }
-            }
+            } ?: return@runWriteCommandAction
+
+            val replaced = kdoc.replace(factory.createKDocFromText(generated))
+            val reformatted = CodeStyleManager.getInstance(project).reformat(replaced)
+            moveCaretToTodo(editor, reformatted.text, reformatted.textOffset)
         }
         return EnterHandlerDelegate.Result.Continue
     }
 
-    private fun isInKDoc(editor: Editor, offset: Int): Boolean {
-        val document = editor.document
-        val docChars = document.charsSequence
-        var i = CharArrayUtil.lastIndexOf(docChars, "/**", offset)
-        if (i >= 0) {
-            i = CharArrayUtil.indexOf(docChars, "*/", i)
-            return i > offset
+    private fun findKDocAtCaret(file: KtFile, caretOffset: Int): KDoc? {
+        val elementAtCaret = file.findElementAt(caretOffset)
+        val elementBeforeCaret = file.findElementAt((caretOffset - 1).coerceAtLeast(0))
+        return PsiTreeUtil.getParentOfType(elementAtCaret, KDoc::class.java)
+            ?: PsiTreeUtil.getParentOfType(elementBeforeCaret, KDoc::class.java)
+    }
+
+    private fun isEffectivelyEmptyKDocSection(section: KDocSection): Boolean {
+        val normalized = section.text
+            .lineSequence()
+            .map { it.trim() }
+            .joinToString("")
+            .replace("*", "")
+            .replace("/", "")
+        return normalized.isBlank()
+    }
+
+    private fun moveCaretToTodo(editor: Editor, kdocText: String, kdocTextOffset: Int) {
+        val todoIndex = kdocText.indexOf("TODO")
+        if (todoIndex >= 0) {
+            editor.caretModel.moveToOffset(kdocTextOffset + todoIndex)
         }
-        return false
     }
 }
